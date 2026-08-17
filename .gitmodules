@@ -1,0 +1,3 @@
+[submodule "vendor/langgraphjs"]
+	path = vendor/langgraphjs
+	url = git@github.com:langchain-ai/langgraphjs.git
