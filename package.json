@@ -1,0 +1,27 @@
+{
+  "name": "happyagent",
+  "version": "0.1.0",
+  "description": "基于 LangGraph.js 构建、由 Kimi K2.6 驱动的命令行 coding agent（学习/研究用途）",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "smoke": "tsx src/smoke.ts",
+    "agent": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.0",
+    "@langchain/langgraph": "^0.4.0",
+    "@langchain/openai": "^0.6.0",
+    "@langfuse/langchain": "^5.10.0",
+    "@langfuse/otel": "^5.10.0",
+    "@opentelemetry/sdk-trace-node": "^2.10.0",
+    "dotenv": "^16.4.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
