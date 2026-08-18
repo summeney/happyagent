@@ -2,4 +2,9 @@ node_modules/
 .env
 *.log
 dist/
+dist-electron/
+data/
+*.db
+*.db-shm
+*.db-wal
 .DS_Store

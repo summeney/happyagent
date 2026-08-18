@@ -5,34 +5,29 @@
  *   npm run agent -- "读取 package.json 并告诉我依赖了哪些包"
  *
  * 可选开关：
- *   --graph            用 Phase 2 的手写 StateGraph（默认用 Phase 1 的 createReactAgent）
- *   --hitl             执行 run_bash 前需人工审批（Phase 3）
+ *   --hitl             执行 run_bash 前需人工审批
  *   --thread <id>      指定会话 id（配合记忆/续跑，默认 "cli-session"）
  *   --model <name>     指定模型名（默认 kimi-k2.6）
  *
  * 例：
- *   npm run agent -- --graph "统计 src 下有多少个 .ts 文件"
  *   npm run agent -- --hitl "运行 npm run typecheck"
  */
 import "dotenv/config";
 import { createInterface } from "node:readline/promises";
 import { HumanMessage, type BaseMessage } from "@langchain/core/messages";
 import { Command, MemorySaver } from "@langchain/langgraph";
-import { buildAgent } from "./agent.js";
 import { buildGraph } from "./graph.js";
 import { setBashApprovalEnabled } from "./tools/index.js";
 import { initTracing } from "./tracing.js";
 
 interface CliOptions {
   task: string;
-  useGraph: boolean;
   hitl: boolean;
   threadId: string;
   model?: string;
 }
 
 function parseArgs(argv: string[]): CliOptions {
-  let useGraph = false;
   let hitl = false;
   let threadId = "cli-session";
   let model: string | undefined;
@@ -40,14 +35,13 @@ function parseArgs(argv: string[]): CliOptions {
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--graph") useGraph = true;
-    else if (a === "--hitl") hitl = true;
+    if (a === "--hitl") hitl = true;
     else if (a === "--thread") threadId = argv[++i] ?? threadId;
     else if (a === "--model") model = argv[++i];
     else rest.push(a);
   }
 
-  return { task: rest.join(" ").trim(), useGraph, hitl, threadId, model };
+  return { task: rest.join(" ").trim(), hitl, threadId, model };
 }
 
 function truncate(text: string, max = 800): string {
@@ -95,7 +89,7 @@ async function askApproval(value: unknown): Promise<boolean> {
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.task) {
-    console.error('用法：npm run agent -- "你的任务描述" [--graph] [--hitl] [--thread <id>] [--model <name>]');
+    console.error('用法：npm run agent -- "你的任务描述" [--hitl] [--thread <id>] [--model <name>]');
     process.exitCode = 1;
     return;
   }
@@ -110,11 +104,9 @@ async function main() {
   // HITL 或指定线程时需要 checkpointer（interrupt/续跑都依赖它保存状态）
   const checkpointer = opts.hitl ? new MemorySaver() : undefined;
 
-  const build = opts.useGraph ? buildGraph : buildAgent;
-  const app = build({ checkpointer, model: opts.model });
+  const app = buildGraph({ checkpointer, model: opts.model });
 
-  const flavor = opts.useGraph ? "手写 StateGraph" : "createReactAgent";
-  console.log(`▶ 运行 coding agent（${flavor}${opts.hitl ? " · HITL 审批开" : ""}）`);
+  console.log(`▶ 运行 coding agent（手写 StateGraph${opts.hitl ? " · HITL 审批开" : ""}）`);
   console.log(`  任务：${opts.task}`);
 
   const config = {

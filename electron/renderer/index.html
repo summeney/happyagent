@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>happyagent</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar">
+        <div class="sidebar-head">
+          <span class="brand">happyagent</span>
+          <button id="new-session" title="新建会话">＋</button>
+        </div>
+        <ul id="session-list"></ul>
+        <label class="approval-toggle">
+          <input type="checkbox" id="approval" />
+          <span>run_bash 审批</span>
+        </label>
+      </aside>
+
+      <main id="chat">
+        <div id="messages"></div>
+        <form id="composer">
+          <textarea
+            id="input"
+            rows="1"
+            placeholder="给 agent 发消息，Enter 发送、Shift+Enter 换行…"
+          ></textarea>
+          <button id="send" type="submit">发送</button>
+        </form>
+      </main>
+    </div>
+
+    <!-- run_bash 审批弹窗 -->
+    <div id="approval-modal" class="modal hidden">
+      <div class="modal-card">
+        <h3>agent 想执行命令</h3>
+        <pre id="approval-command"></pre>
+        <div class="modal-actions">
+          <button id="approve-deny" class="btn-deny">拒绝</button>
+          <button id="approve-ok" class="btn-ok">批准执行</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

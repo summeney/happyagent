@@ -1,17 +1,21 @@
 {
   "name": "happyagent",
   "version": "0.1.0",
-  "description": "基于 LangGraph.js 构建、由 Kimi K2.6 驱动的命令行 coding agent（学习/研究用途）",
+  "description": "基于 LangGraph.js 构建、由 Kimi K2.6 驱动的 coding agent，带命令行与 Electron 桌面端（学习/研究用途）",
   "type": "module",
   "private": true,
+  "main": "dist-electron/main.cjs",
   "scripts": {
     "smoke": "tsx src/smoke.ts",
     "agent": "tsx src/cli.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:electron": "node scripts/build-electron.mjs",
+    "desktop": "npm run build:electron && NODE_OPTIONS=--experimental-sqlite electron ."
   },
   "dependencies": {
     "@langchain/core": "^0.3.0",
     "@langchain/langgraph": "^0.4.0",
+    "@langchain/langgraph-checkpoint": "^0.1.1",
     "@langchain/openai": "^0.6.0",
     "@langfuse/langchain": "^5.10.0",
     "@langfuse/otel": "^5.10.0",
@@ -21,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "electron": "^43.4.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }

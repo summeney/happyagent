@@ -6,10 +6,10 @@ import { runBashTool } from "./run_bash.js";
 import { grepTool } from "./grep.js";
 import { editFileTool } from "./edit_file.js";
 
-/** Phase 1 的最小四件套。 */
+/** 最小四件套：读 / 列目录 / 写 / 跑命令。 */
 export const coreTools = [readFileTool, listDirTool, writeFileTool, runBashTool];
 
-/** Phase 2 起的完整工具集（增补 grep / edit_file）。 */
+/** 完整工具集（在四件套基础上增补 grep / edit_file）。 */
 export const allTools = [...coreTools, grepTool, editFileTool];
 
 export {

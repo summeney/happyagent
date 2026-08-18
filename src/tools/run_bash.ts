@@ -2,8 +2,8 @@
  * run_bash 工具：执行一条 shell 命令，返回 stdout/stderr/退出码。
  *
  * ⚠️ 这把工具能执行任意命令，是最危险的一把。
- *   - Phase 1/2：裸跑（approval 关闭）。
- *   - Phase 3：打开人工审批（setBashApprovalEnabled(true)）后，执行前会通过
+ *   - 默认：裸跑（approval 关闭）。
+ *   - 打开人工审批（setBashApprovalEnabled(true)）后，执行前会通过
  *     LangGraph 的 `interrupt` 暂停并把待执行命令抛给用户确认。
  *
  * 注意：命令失败（非零退出码）不会抛异常中断整个 agent，而是把退出码和
@@ -17,7 +17,7 @@ import { interrupt } from "@langchain/langgraph";
 
 const pexec = promisify(exec);
 
-/** 是否在执行前请求人工审批（Phase 3 打开）。 */
+/** 是否在执行前请求人工审批。 */
 let approvalEnabled = false;
 
 /** 开关人工审批。CLI 在 --hitl 模式下调用它。 */
@@ -35,7 +35,7 @@ function format(stdout: string, stderr: string, code: number): string {
 
 export const runBashTool = tool(
   async ({ command }: { command: string }): Promise<string> => {
-    // —— Phase 3：危险操作人工审批 ——
+    // —— 危险操作人工审批 ——
     // interrupt 会中断图的执行，把这个 payload 抛给外层；外层用
     // Command({ resume: <决定> }) 恢复时，interrupt 的返回值即为该决定。
     if (approvalEnabled) {
