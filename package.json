@@ -6,10 +6,10 @@
   "private": true,
   "main": "dist-electron/main.cjs",
   "scripts": {
-    "smoke": "tsx src/core/smoke.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:renderer": "tsc -p tsconfig.renderer.json --noEmit",
     "test": "NODE_OPTIONS=--experimental-sqlite vitest run",
+    "test:contract": "vitest run --config vitest.contract.config.ts",
     "test:e2e": "NODE_OPTIONS=--experimental-sqlite playwright test",
     "dev:server": "langgraphjs dev --no-browser",
     "build:electron": "node scripts/build-electron.mjs",
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "^1.4.4",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.0.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "electron": "^43.4.0",
