@@ -5,7 +5,7 @@
  * 受限的方法（design.md D2）。请求-响应用 invoke，过程事件用 on 订阅。
  */
 import { contextBridge, ipcRenderer } from "electron";
-import type { RunEvent, SessionMeta, UiMessage } from "../src/session/service.js";
+import type { RunEvent, SessionMeta, UiMessage } from "../../shared/ipc.js";
 
 const api = {
   listSessions: (): Promise<SessionMeta[]> => ipcRenderer.invoke("sessions:list"),

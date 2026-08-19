@@ -8,3 +8,6 @@ data/
 *.db-shm
 *.db-wal
 .DS_Store
+
+# LangGraph API
+.langgraph_api

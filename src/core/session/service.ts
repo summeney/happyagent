@@ -16,24 +16,10 @@ import { Command } from "@langchain/langgraph";
 import { buildGraph } from "../graph.js";
 import { setBashApprovalEnabled } from "../tools/index.js";
 import { createSqliteCheckpointer } from "./checkpointer.js";
-import { SessionStore, type SessionMeta } from "./store.js";
+import { SessionStore } from "./store.js";
+import type { RunEvent, UiMessage, SessionMeta } from "../../shared/ipc.js";
 
-export type { SessionMeta } from "./store.js";
-
-/** 供渲染层展示的一条历史消息（已脱去 LangChain 类型，纯可序列化）。 */
-export type UiMessage =
-  | { role: "user"; text: string }
-  | { role: "ai"; text: string; toolCalls: { name: string; args: unknown }[] }
-  | { role: "tool"; text: string };
-
-/** 一次运行过程中主进程 → 渲染层的单向事件（见 design.md D3）。 */
-export type RunEvent =
-  | { type: "run:ai"; runId: string; threadId: string; text: string }
-  | { type: "run:tool_call"; runId: string; threadId: string; name: string; args: unknown }
-  | { type: "run:tool_result"; runId: string; threadId: string; text: string }
-  | { type: "run:interrupt"; runId: string; threadId: string; command: string }
-  | { type: "run:done"; runId: string; threadId: string }
-  | { type: "run:error"; runId: string; threadId: string; message: string };
+export type { RunEvent, UiMessage, SessionMeta } from "../../shared/ipc.js";
 
 export type EmitFn = (event: RunEvent) => void;
 
@@ -189,7 +175,9 @@ export class SessionService {
 
       // interrupt 循环：stream 中断 → 发 interrupt 事件 → 等审批 → Command 恢复
       while (true) {
-        for await (const chunk of await this.app.stream(input, {
+        // 注：此运行循环（含 interrupt/审批与单会话锁）将在 Group 4 随迁移到
+        // LangGraph Server 而整体移除；此处 input 的类型转换仅为过渡期编译通过。
+        for await (const chunk of await this.app.stream(input as never, {
           ...config,
           streamMode: "updates",
         })) {

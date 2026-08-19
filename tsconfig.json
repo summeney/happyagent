@@ -12,6 +12,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "electron/**/*.ts"],
+  "include": ["src/core/**/*.ts", "src/app/**/*.ts", "src/shared/**/*.ts"],
   "exclude": ["node_modules", "vendor", "dist-electron"]
 }

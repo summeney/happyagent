@@ -10,8 +10,9 @@
 import "dotenv/config";
 import { join } from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { SessionService, type RunEvent } from "../src/session/service.js";
-import { resolveDbPath } from "../src/session/paths.js";
+import { SessionService } from "../../core/session/service.js";
+import { resolveDbPath } from "../../core/session/paths.js";
+import type { RunEvent } from "../../shared/ipc.js";
 
 let service: SessionService;
 let win: BrowserWindow | null = null;

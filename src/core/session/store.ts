@@ -10,14 +10,9 @@
  * 允许"新建了却从未发消息"的空会话存在（此时 checkpointer 里没有记录）。
  */
 import { DatabaseSync } from "node:sqlite";
+import type { SessionMeta } from "../../shared/ipc.js";
 
-/** 一条会话目录项。 */
-export interface SessionMeta {
-  id: string;
-  title: string;
-  createdAt: number;
-  updatedAt: number;
-}
+export type { SessionMeta } from "../../shared/ipc.js";
 
 interface Row {
   id: string;
