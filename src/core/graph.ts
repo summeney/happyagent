@@ -23,21 +23,31 @@ import {
 } from "@langchain/langgraph";
 import type { BaseCheckpointSaver } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { isAIMessage, SystemMessage } from "@langchain/core/messages";
+import { isAIMessage, SystemMessage, type AIMessage, type BaseMessage } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { createModel } from "./model.js";
 import { allTools } from "./tools/index.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
 
+/** 供 graph 使用的最小模型接口：绑定工具后可 invoke 出一条 AI 消息。 */
+export interface GraphChatModel {
+  bindTools(tools: StructuredToolInterface[]): {
+    invoke(messages: BaseMessage[]): Promise<AIMessage>;
+  };
+}
+
 export interface BuildGraphOptions {
   tools?: StructuredToolInterface[];
   checkpointer?: BaseCheckpointSaver;
+  /** 模型名（按名构建真实 Kimi 模型）。 */
   model?: string;
+  /** 注入一个已构造的聊天模型（测试用替身，绕过真实网络）。优先于 `model`。 */
+  chatModel?: GraphChatModel;
 }
 
 export function buildGraph(options: BuildGraphOptions = {}) {
-  const { tools = allTools, checkpointer, model } = options;
-  const llm = createModel(model);
+  const { tools = allTools, checkpointer, model, chatModel } = options;
+  const llm: GraphChatModel = chatModel ?? (createModel(model) as unknown as GraphChatModel);
   const llmWithTools = llm.bindTools(tools);
   const toolNode = new ToolNode(tools);
 

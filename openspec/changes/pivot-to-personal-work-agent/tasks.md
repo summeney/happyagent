@@ -52,9 +52,9 @@
 
 ## 7. 测试
 
-- [ ] 7.1 引入 Vitest；`createModel` 改为可注入替身模型实例
-- [ ] 7.2 单元测试：`tools/*`、`model`（含 `temperature=1` 断言）、纯函数
-- [ ] 7.3 集成测试：注入替身模型直接 `invoke` graph，覆盖多步工具调用与步数上限，不发真实网络
+- [x] 7.1 引入 Vitest（`npm test`）；`buildGraph` 增 `chatModel` 注入口 + `GraphChatModel` 接口，可注入替身模型绕过真实网络
+- [x] 7.2 单元测试：`tools/*`（临时工作区读写/编辑/grep/run_bash 退出码）、`workspace`、`model`（缺 key 抛错 + temperature=1）——共 17 例
+- [x] 7.3 集成测试：注入替身模型 `invoke` graph，覆盖多步工具调用、无工具直接答复、步数上限（recursionLimit 抛错）——3 例；全部 20 例通过，test 纳入 typecheck
 - [ ] 7.4 引入 Playwright `_electron`；e2e 覆盖 新建会话→发消息→流式渲染、跨重启读回历史
 - [ ] 7.5 `smoke.ts` 转为打标签的 Kimi function-calling 契约测试（不进 CI 默认路径）
 
