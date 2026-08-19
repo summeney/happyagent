@@ -4,22 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>happyagent</title>
-    <style>
-      body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; background: #1a1a1a; color: #e6e6e6; }
-      h1 { font-size: 1.2rem; }
-      .row { margin: 0.5rem 0; }
-      .k { color: #888; }
-      code { background: #2a2a2a; padding: 0.1rem 0.4rem; border-radius: 4px; }
-      .ok { color: #6ee787; }
-      .bad { color: #ff7b72; }
-      .wait { color: #f0b400; }
-    </style>
   </head>
   <body>
-    <h1>happyagent · 运行时占位页（Group 5 将替换为 Vue）</h1>
-    <div class="row"><span class="k">运行时状态：</span><span id="state" class="wait">查询中…</span></div>
-    <div class="row"><span class="k">server url：</span><code id="url">—</code></div>
-    <div class="row"><span class="k">renderer → server 连通：</span><span id="conn" class="wait">—</span></div>
-    <script src="./renderer.js"></script>
+    <div id="app"></div>
+    <script type="module" src="./main.ts"></script>
   </body>
 </html>

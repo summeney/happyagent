@@ -36,11 +36,11 @@
 
 ## 5. Vue 渲染层
 
-- [ ] 5.1 新增依赖：`vue`、`vite`、`@langchain/vue`；确认 `@langchain/vue` npm 发布版可用（R3），不稳则以 sdk 自封装组合式函数
-- [ ] 5.2 Vite + Vue 3 应用骨架接入 Electron renderer；preload 缩减为原生能力桥
-- [ ] 5.3 用 `useStream` 打通流式渲染：AI 文本 / 工具调用 / 工具结果三类增量呈现
-- [ ] 5.4 会话列表：新建、点击切换、按最近更新倒序、自动生成标题
-- [ ] 5.5 同一会话运行中禁止重复提交（限制仅作用于该会话）
+- [x] 5.1 新增依赖 `vue`/`vite`/`@vitejs/plugin-vue`；按 R3 选择**回退路径**（SDK Client + 自封装 Vue 组合式），不赌 `@langchain/vue` useStream 在 Electron file:// 下的未知行为，换取全控与并发支持
+- [x] 5.2 Vite + Vue 3 应用（`vite.config.ts` base './'，构建到 dist-electron/renderer）；preload 已为原生桥；env.d.ts 声明 window.happyagent 与 .vue
+- [x] 5.3 `lib/agent.ts` 组合式经 SDK `runs.stream(updates)` 增量呈现 AI 文本/工具调用/工具结果（App.vue 三类分别渲染）；模拟 UI 流程验证 read_file 端到端
+- [x] 5.4 会话列表：新建、点击切换、`threads.search(updated_at desc)` 倒序、首条消息 `threads.update` 写 metadata.title 自动标题
+- [x] 5.5 每会话运行锁（`state.running[id]`）：运行中该会话禁止重复提交，不阻止其他会话
 
 ## 6. 并发多会话与 MCP
 

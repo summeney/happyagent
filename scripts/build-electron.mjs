@@ -8,7 +8,7 @@
  *   node: 前缀模块（含 node:sqlite）由 esbuild 自动外置，无原生编译。
  */
 import { build } from "esbuild";
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -55,7 +55,8 @@ await build({
   outfile: resolve(outdir, "runtime.mjs"),
 });
 
-// 渲染层静态资源
-cpSync(resolve(root, "src/renderer"), resolve(outdir, "renderer"), { recursive: true });
+// 渲染层：Vue 3 应用经 Vite 构建到 dist-electron/renderer
+const { build: viteBuild } = await import("vite");
+await viteBuild({ configFile: resolve(root, "vite.config.ts"), logLevel: "warn" });
 
 console.log("✅ Electron 打包完成 → dist-electron/（main.cjs · preload.cjs · runtime.mjs · renderer/）");
