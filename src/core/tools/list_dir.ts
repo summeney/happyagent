@@ -2,11 +2,12 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { readdir } from "node:fs/promises";
+import { resolveInWorkspace } from "../workspace.js";
 
 export const listDirTool = tool(
   async ({ path }: { path: string }): Promise<string> => {
     try {
-      const entries = await readdir(path, { withFileTypes: true });
+      const entries = await readdir(resolveInWorkspace(path), { withFileTypes: true });
       if (entries.length === 0) return `（空目录）${path}`;
       return entries
         .map((e) => (e.isDirectory() ? `${e.name}/` : e.name))

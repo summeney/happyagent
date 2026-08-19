@@ -8,6 +8,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { resolveInWorkspace } from "../workspace.js";
 
 const SKIP_DIRS = new Set(["node_modules", ".git", "vendor", "dist"]);
 const MAX_RESULTS = 200;
@@ -32,7 +33,7 @@ async function walk(dir: string, out: string[]): Promise<void> {
 
 export const grepTool = tool(
   async ({ pattern, path }: { pattern: string; path?: string }): Promise<string> => {
-    const root = path ?? ".";
+    const root = resolveInWorkspace(path ?? ".");
     let regex: RegExp;
     try {
       regex = new RegExp(pattern);

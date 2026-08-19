@@ -7,11 +7,12 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { readFile } from "node:fs/promises";
+import { resolveInWorkspace } from "../workspace.js";
 
 export const readFileTool = tool(
   async ({ path }: { path: string }): Promise<string> => {
     try {
-      return await readFile(path, "utf-8");
+      return await readFile(resolveInWorkspace(path), "utf-8");
     } catch (err) {
       const e = err as NodeJS.ErrnoException;
       if (e.code === "ENOENT") {

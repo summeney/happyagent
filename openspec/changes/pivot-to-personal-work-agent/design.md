@@ -100,6 +100,7 @@ test/  unit/  e2e/
 - **R2 · 打包分发 → 已基本解决**（embed spike）：`createEmbedServer` 是纯 JS Hono app，进程内 `serve()`，无 CLI/Docker/spawn，随 Electron 常规打包即可。剩余待验证仅"utilityProcess 内 bind 端口 + node:sqlite 在打包环境可用"，Group 3 落地时确认。
 - **R3 · `@langchain/vue` 成熟度**：官方 SDK（含 vue）测试即以 `createEmbedServer` 为后端 → 对接路径已被官方覆盖；仍需在 Group 5 确认 npm 发布版与 useStream API。不稳则以 sdk（非框架 hook）自封装 Vue 组合式函数。
 - **R4 · 持久化 → 已解决**（embed spike）：`checkpointer` 由我们注入，spike 中 thread state 正确落 4 条消息。落地用 `node-sqlite-saver` 或官方 sqlite checkpointer；e2e 覆盖"重启后读回"。
+- **R7 · esbuild 打包破坏依赖的 `import.meta.url` 自解析（实现期踩坑，已解决）**：langchain/langgraph 用 `import.meta.url` 读自身 `package.json` 做版本检测；被打进 `runtime.mjs` 后 `import.meta.url` 变为 bundle 位置，相对路径错指 → 运行时 ENOENT。**解法**：runtime 构建用 `packages: "external"`，只打我们的 `src/*`，node_modules 依赖运行时加载（分发时随包携带 node_modules）。附带确立"工作区根"设计：文件工具/`run_bash` 经 `core/workspace.ts` 的 `HAPPYAGENT_WORKDIR` 解析相对路径，不依赖不确定的 `process.cwd()`。
 - **R6 · WebSocket 传输被 hono 版本冲突挡住**：`@hono/node-ws@1.3` peer 要 `node-server ^1.x`，与 langgraph-api 要的 `node-server ^2.x` 冲突 → 暂不装 node-ws，走 SSE 传输（spike 已验证够用）；WebSocket 作为后续增强，待生态版本对齐再加。
 - **R5 · Kimi `temperature=1` 约束在迁移中丢失** → 迁入 `src/core/model.ts` 时保留该约束，并加一条单测断言构造参数。
 - **Trade-off · 引入 HTTP 边界与一个额外进程**：换来的是不必自建整套编排/持久化。对日常工具，这笔交换划算；但确实新增了"管一个子进程"的复杂度。

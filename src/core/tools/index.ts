@@ -20,4 +20,3 @@ export {
   grepTool,
   editFileTool,
 };
-export { setBashApprovalEnabled } from "./run_bash.js";

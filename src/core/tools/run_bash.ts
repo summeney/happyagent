@@ -1,10 +1,9 @@
 /**
  * run_bash 工具：执行一条 shell 命令，返回 stdout/stderr/退出码。
  *
- * ⚠️ 这把工具能执行任意命令，是最危险的一把。
- *   - 默认：裸跑（approval 关闭）。
- *   - 打开人工审批（setBashApprovalEnabled(true)）后，执行前会通过
- *     LangGraph 的 `interrupt` 暂停并把待执行命令抛给用户确认。
+ * ⚠️ 这把工具能执行任意命令，是最危险的一把。本项目定位为作者本机个人使用、
+ * 默认全权限，不设人工审批（见 design.md D6）；如需限制，请在操作系统层面
+ * （受限用户/沙箱）约束应用运行环境。
  *
  * 注意：命令失败（非零退出码）不会抛异常中断整个 agent，而是把退出码和
  * 输出一并回灌给模型，让它自己决定下一步。
@@ -13,17 +12,13 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { interrupt } from "@langchain/langgraph";
+import { workspaceRoot } from "../workspace.js";
 
 const pexec = promisify(exec);
 
-/** 是否在执行前请求人工审批。 */
-let approvalEnabled = false;
-
-/** 开关人工审批。CLI 在 --hitl 模式下调用它。 */
-export function setBashApprovalEnabled(enabled: boolean): void {
-  approvalEnabled = enabled;
-}
+/** 长线任务超时上限（10 分钟）与更大的输出缓冲。 */
+const TIMEOUT_MS = 600_000;
+const MAX_BUFFER = 10 * 1024 * 1024;
 
 function format(stdout: string, stderr: string, code: number): string {
   const parts = [`退出码: ${code}`];
@@ -35,25 +30,11 @@ function format(stdout: string, stderr: string, code: number): string {
 
 export const runBashTool = tool(
   async ({ command }: { command: string }): Promise<string> => {
-    // —— 危险操作人工审批 ——
-    // interrupt 会中断图的执行，把这个 payload 抛给外层；外层用
-    // Command({ resume: <决定> }) 恢复时，interrupt 的返回值即为该决定。
-    if (approvalEnabled) {
-      const decision = interrupt({ type: "approve_bash", command }) as unknown;
-      const approved =
-        decision === true ||
-        decision === "approve" ||
-        decision === "y" ||
-        (typeof decision === "object" && decision !== null && (decision as { approved?: boolean }).approved === true);
-      if (!approved) {
-        return `已被用户拒绝执行该命令：${command}`;
-      }
-    }
-
     try {
       const { stdout, stderr } = await pexec(command, {
-        timeout: 60_000,
-        maxBuffer: 1024 * 1024,
+        timeout: TIMEOUT_MS,
+        maxBuffer: MAX_BUFFER,
+        cwd: workspaceRoot(),
       });
       return format(stdout, stderr, 0);
     } catch (err) {

@@ -3,12 +3,14 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+import { resolveInWorkspace } from "../workspace.js";
 
 export const writeFileTool = tool(
   async ({ path, content }: { path: string; content: string }): Promise<string> => {
     try {
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, content, "utf-8");
+      const abs = resolveInWorkspace(path);
+      await mkdir(dirname(abs), { recursive: true });
+      await writeFile(abs, content, "utf-8");
       return `已写入 ${path}（${content.length} 字符）`;
     } catch (err) {
       const e = err as NodeJS.ErrnoException;

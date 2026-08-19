@@ -20,18 +20,19 @@
 
 - [x] 3.1 新建 `src/app/server/runtime.ts`：`createEmbedServer({ graph: buildGraph(), checkpointer, threads })` + `@hono/node-server` `serve()`，bind `127.0.0.1:<port>`（headless 验证通过）
 - [x] 3.2 注入**落盘** checkpointer（复用 `core/session/node-sqlite-saver` via `createSqliteCheckpointer`）；`ThreadSaver` 用新写的 `src/app/server/thread-store.ts` 落盘实现（get/set/delete/search）取代 SessionStore（更贴合接口，SessionStore 转由 Group 4 清理）
-- [ ] 3.3 用 `utilityProcess.fork` 在独立进程跑 embed 模块；main 作监工：fork → 健康探测就绪 → 再建窗口〔待 Electron 可启动后验证，与 Group 5 build 一并做〕
-- [ ] 3.4 监工守护：子进程崩溃按退避重启并把可用性状态传给界面；`app` 退出时优雅关闭，验证无孤儿进程〔同上，待 Electron 启动〕
-- [ ] 3.5 验证 server 仅监听回环地址、外部地址不可达〔已在 `serve({ hostname: "127.0.0.1" })` 实现，外部不可达待启动后验证〕
+- [x] 3.3 `src/app/server/entry.ts`（utilityProcess 入口，parentPort 握手）+ `main.ts` 监工（fork→就绪→建窗口）；真 Electron 启动验证：进程树含 utilityProcess(node service, --experimental-sqlite) + renderer 窗口，app 内 server `200`
+- [x] 3.4 监工守护：崩溃退避重启（杀子进程→日志"1000ms 后重启"→端口恢复 200）；退出优雅关闭（kill app 后无孤儿）
+- [x] 3.5 `serve({ hostname: "127.0.0.1" })` 仅监听回环；curl 127.0.0.1 通、外部接口不监听
+- [x] 3.7 修复工具工作目录：`core/workspace.ts`（HAPPYAGENT_WORKDIR）+ 全部文件工具/run_bash 显式解析；修复 runtime 打包（`packages: external`，避免 langchain 用 import.meta.url 读自身 package.json 时错位）。真 Electron 端到端 read_file 通过
 - [x] 3.6 验证跨重启读回历史（落盘 checkpointer 生效）：同一 dbDir 重启后 thread state 4 条消息完整读回，线程目录能列出
 
 ## 4. 删除旧运行时与命令行/审批
 
-- [ ] 4.1 删除 `src/session/service.ts` 运行循环、`node-sqlite-saver.ts`、`checkpointer.ts`（保留仍需要的 `store`/`paths` 中确有用的部分或一并清理）
+- [x] 4.1 删除 `src/core/session/service.ts`（运行编排循环）、`store.ts`、`paths.ts`（被 embed 运行时取代且无引用）；`node-sqlite-saver.ts`/`checkpointer.ts` 保留（作注入 checkpointer 复用）
 - [x] 4.2 删除 `src/cli.ts`（Group 1 提前完成：它无处安放于新结构且是 typecheck 报错源之一）
-- [ ] 4.3 删除审批链：`run_bash` 的 `interrupt`/审批分支、`tools/index.ts` 的 `setBashApprovalEnabled` 导出、界面审批弹窗
-- [ ] 4.4 `run_bash` 的 `timeout` 上调以支持长线命令
-- [ ] 4.5 移除旧构建脚本 `scripts/build-electron.mjs`（改用 Vite 构建）
+- [x] 4.3 删除审批链：`run_bash` 的 `interrupt`/审批分支、`tools/index.ts` 的 `setBashApprovalEnabled` 导出（旧界面审批弹窗随旧 renderer 一并退役）
+- [x] 4.4 `run_bash` 的 `timeout` 上调至 600s、`maxBuffer` 至 10MB 以支持长线命令
+- [x] 4.5 `scripts/build-electron.mjs` 改造复用（打包 main/preload/runtime 三入口）；Vue renderer 的 Vite 构建 Group 5 另立，故此脚本保留而非移除
 
 ## 5. Vue 渲染层
 

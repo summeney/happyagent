@@ -7,6 +7,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { readFile, writeFile } from "node:fs/promises";
+import { resolveInWorkspace } from "../workspace.js";
 
 export const editFileTool = tool(
   async ({
@@ -18,9 +19,10 @@ export const editFileTool = tool(
     old_text: string;
     new_text: string;
   }): Promise<string> => {
+    const abs = resolveInWorkspace(path);
     let content: string;
     try {
-      content = await readFile(path, "utf-8");
+      content = await readFile(abs, "utf-8");
     } catch (err) {
       const e = err as NodeJS.ErrnoException;
       if (e.code === "ENOENT") return `错误：文件不存在: ${path}`;
@@ -37,7 +39,7 @@ export const editFileTool = tool(
 
     const updated = content.replace(old_text, new_text);
     try {
-      await writeFile(path, updated, "utf-8");
+      await writeFile(abs, updated, "utf-8");
     } catch (err) {
       return `错误：写回文件失败 (${path}): ${(err as Error).message}`;
     }

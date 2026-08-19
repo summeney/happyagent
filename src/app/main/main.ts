@@ -1,21 +1,77 @@
 /**
- * Electron 主进程。
+ * Electron 主进程 —— 运行时"监工"。
  *
- * 主进程本身就是 Node 进程，所以 agent 运行时（buildGraph）、SqliteSaver、
- * 工具（fs / run_bash）全都直接在这里跑，无需额外的 HTTP 服务
- * （见 design.md D1/D2）。渲染层经 preload 暴露的受限桥与本进程通信：
- *   - invoke（请求-响应）：sessions:* / chat:send / approval:resolve / settings:*
- *   - send（单向事件流）：run:event —— 一次运行过程中的 ai / 工具 / 中断 / 结束
+ * 不再在本进程执行 agent（见 design.md D3）。职责：
+ *   1. 用 utilityProcess.fork 在独立进程拉起嵌入式运行时（src/app/server/entry）
+ *   2. 等其就绪（parentPort 握手拿到本机 server url）后再建窗口
+ *   3. 运行期守护：子进程异常退出按退避策略重启，并把可用性状态告知界面
+ *   4. app 退出时优雅关闭子进程，不留孤儿
+ *
+ * 渲染层不经 IPC 跑 agent，而是经该 url 直连本机 server（HTTP/SSE）。
+ * 主进程只经 IPC 暴露原生能力（当前：查询 runtime 状态/url）。
  */
-import "dotenv/config";
 import { join } from "node:path";
-import { app, BrowserWindow, ipcMain } from "electron";
-import { SessionService } from "../../core/session/service.js";
-import { resolveDbPath } from "../../core/session/paths.js";
-import type { RunEvent } from "../../shared/ipc.js";
+import { app, BrowserWindow, ipcMain, utilityProcess, type UtilityProcess } from "electron";
+import type { RuntimeStatus } from "../../shared/ipc.js";
 
-let service: SessionService;
+let child: UtilityProcess | null = null;
+let status: RuntimeStatus = { state: "starting" };
 let win: BrowserWindow | null = null;
+let quitting = false;
+let restartAttempts = 0;
+
+/** 广播运行时状态给渲染层。 */
+function broadcastStatus(): void {
+  win?.webContents.send("runtime:status", status);
+}
+
+/** fork 运行时子进程，返回一个在其就绪时 resolve(url) 的 Promise。 */
+function forkRuntime(): Promise<string> {
+  const entry = join(__dirname, "runtime.mjs");
+  return new Promise((resolve, reject) => {
+    const proc = utilityProcess.fork(entry, [], {
+      env: {
+        ...process.env,
+        HAPPYAGENT_DB_DIR: app.getPath("userData"),
+        HAPPYAGENT_MODEL: process.env.HAPPYAGENT_MODEL ?? "",
+        // agent 工作目录（工具相对路径的根）。当前默认启动 cwd；
+        // 未来应按会话/项目可选（design.md Open Questions）。
+        HAPPYAGENT_WORKDIR: process.env.HAPPYAGENT_WORKDIR ?? app.getAppPath(),
+      },
+      // node:sqlite 在内置 Node 下仍是实验特性，需显式开启
+      execArgv: ["--experimental-sqlite"],
+      stdio: "inherit",
+    });
+    child = proc;
+
+    proc.on("message", (msg: { type?: string; url?: string; message?: string }) => {
+      if (msg?.type === "ready" && msg.url) {
+        restartAttempts = 0;
+        status = { state: "ready", url: msg.url };
+        broadcastStatus();
+        resolve(msg.url);
+      } else if (msg?.type === "error") {
+        reject(new Error(msg.message ?? "运行时启动失败"));
+      }
+    });
+
+    proc.on("exit", (code) => {
+      child = null;
+      if (quitting) return;
+      // 非预期退出：标记不可用并按退避重启
+      status = { state: "unavailable" };
+      broadcastStatus();
+      const delay = Math.min(1000 * 2 ** restartAttempts, 15_000);
+      restartAttempts++;
+      console.error(`运行时子进程退出（code=${code}），${delay}ms 后重启（第 ${restartAttempts} 次）`);
+      setTimeout(() => {
+        status = { state: "starting" };
+        broadcastStatus();
+        forkRuntime().catch((e) => console.error("重启失败：", e));
+      }, delay);
+    });
+  });
+}
 
 function createWindow(): void {
   win = new BrowserWindow({
@@ -29,35 +85,19 @@ function createWindow(): void {
     },
   });
   win.loadFile(join(__dirname, "renderer", "index.html"));
+  win.webContents.on("did-finish-load", broadcastStatus);
 }
 
-function registerIpc(): void {
-  // —— 请求-响应 ——
-  ipcMain.handle("sessions:list", () => service.list());
-  ipcMain.handle("sessions:create", () => service.create());
-  ipcMain.handle("sessions:history", (_e, threadId: string) =>
-    service.history(threadId),
-  );
-  ipcMain.handle("approval:resolve", (_e, runId: string, approved: boolean) => {
-    service.resolveApproval(runId, approved);
-  });
-  ipcMain.handle("settings:setApproval", (_e, enabled: boolean) => {
-    service.setApproval(enabled);
-  });
+// 渲染层查询当前运行时状态（含 url）。
+ipcMain.handle("runtime:status", () => status);
 
-  // —— 发消息：过程事件经 run:event 单向推回渲染层，Promise 在本轮结束时 resolve ——
-  ipcMain.handle("chat:send", async (event, threadId: string, text: string) => {
-    const emit = (e: RunEvent) => event.sender.send("run:event", e);
-    await service.send(threadId, text, emit);
-  });
-}
-
-app.whenReady().then(() => {
-  service = new SessionService({
-    dbPath: resolveDbPath(app.getPath("userData")),
-    model: process.env.HAPPYAGENT_MODEL,
-  });
-  registerIpc();
+app.whenReady().then(async () => {
+  try {
+    await forkRuntime();
+  } catch (e) {
+    status = { state: "unavailable" };
+    console.error("运行时首次启动失败：", e);
+  }
   createWindow();
 
   app.on("activate", () => {
@@ -65,7 +105,13 @@ app.whenReady().then(() => {
   });
 });
 
+app.on("before-quit", () => {
+  quitting = true;
+  child?.postMessage({ type: "shutdown" });
+  // 兜底：给子进程一点时间优雅退出，超时则强杀
+  setTimeout(() => child?.kill(), 2000);
+});
+
 app.on("window-all-closed", () => {
-  service?.close();
   if (process.platform !== "darwin") app.quit();
 });
