@@ -1,0 +1,12 @@
+{
+  "_说明": "把此文件复制到应用数据目录为 mcp.json（或用环境变量 HAPPYAGENT_MCP_CONFIG 指向任意路径），即可接入外部 MCP server。stdio 用 command/args，远程用 url。",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/your/workspace"]
+    },
+    "example-remote": {
+      "url": "http://127.0.0.1:3001/mcp"
+    }
+  }
+}

@@ -15,6 +15,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createEmbedServer } from "@langchain/langgraph-api/experimental/embed";
 import { buildGraph } from "../../core/graph.js";
+import { allTools } from "../../core/tools/index.js";
+import { loadMcpTools } from "../../core/mcp/index.js";
 import { createSqliteCheckpointer } from "../../core/session/checkpointer.js";
 import { createThreadSaver } from "./thread-store.js";
 import { join } from "node:path";
@@ -42,7 +44,9 @@ export async function startRuntime(options: RuntimeOptions): Promise<RuntimeHand
 
   const checkpointer = createSqliteCheckpointer(join(dbDir, "checkpoints.db"));
   const threads = createThreadSaver(join(dbDir, "threads.db"));
-  const graph = buildGraph({ model });
+  // 合并内置工具与 MCP 工具（MCP 缺省/失败时降级为仅内置工具）
+  const mcpTools = await loadMcpTools(join(dbDir, "mcp.json"));
+  const graph = buildGraph({ model, tools: [...allTools, ...mcpTools] });
 
   const app = new Hono();
   app.use("*", cors({ origin: "*", exposeHeaders: ["Content-Location"] }));

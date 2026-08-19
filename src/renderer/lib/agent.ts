@@ -40,6 +40,8 @@ export const state = reactive<AgentState>({
 });
 
 let client: Client | null = null;
+/** 每会话正在进行的运行的中止器，用于分别取消（concurrent-sessions）。 */
+const controllers: Record<string, AbortController> = {};
 
 function truncateTitle(text: string, max = 40): string {
   const first = text.trim().split("\n", 1)[0] ?? "";
@@ -115,6 +117,8 @@ export async function send(text: string): Promise<void> {
   if (!client || !id || state.running[id] || !text.trim()) return;
 
   state.running[id] = true;
+  const controller = new AbortController();
+  controllers[id] = controller;
   (state.messages[id] ??= []).push({ role: "user", text });
 
   // 首条消息 → 自动标题
@@ -128,6 +132,7 @@ export async function send(text: string): Promise<void> {
     for await (const chunk of client.runs.stream(id, "agent", {
       input: { messages: [{ role: "human", content: text }] },
       streamMode: "updates",
+      signal: controller.signal,
     })) {
       const ev = chunk as { event: string; data: Record<string, { messages?: Record<string, unknown>[] }> };
       if (ev.event === "updates") {
@@ -141,9 +146,19 @@ export async function send(text: string): Promise<void> {
       }
     }
   } catch (e) {
-    state.messages[id].push({ role: "tool", text: `连接出错：${(e as Error).message}` });
+    if ((e as Error).name === "AbortError") {
+      state.messages[id].push({ role: "tool", text: "（已取消）" });
+    } else {
+      state.messages[id].push({ role: "tool", text: `连接出错：${(e as Error).message}` });
+    }
   } finally {
     state.running[id] = false;
+    delete controllers[id];
     await refreshThreads();
   }
+}
+
+/** 取消某会话正在进行的运行；只影响该会话（其他并发会话不受影响）。 */
+export function cancel(id: string): void {
+  controllers[id]?.abort();
 }

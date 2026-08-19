@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { state, initAgent, newThread, selectThread, send } from "./lib/agent.js";
+import { state, initAgent, newThread, selectThread, send, cancel } from "./lib/agent.js";
 
 const input = ref("");
 const currentMessages = computed(() => (state.currentId ? state.messages[state.currentId] ?? [] : []));
@@ -58,7 +58,9 @@ onMounted(initAgent);
           </template>
           <template v-else><b>↳</b><div class="body tool">{{ m.text }}</div></template>
         </div>
-        <div v-if="currentRunning" class="running">生成中…</div>
+        <div v-if="currentRunning" class="running">
+          生成中… <button class="stop" @click="cancel(state.currentId!)">停止</button>
+        </div>
       </div>
 
       <form class="composer" @submit.prevent="onSend">
@@ -106,6 +108,7 @@ body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
 .msg .body.tool { color: #888; font-size: 0.85rem; white-space: pre-wrap; }
 .msg code { background: #2a2a2a; padding: 0 0.3rem; border-radius: 3px; }
 .running { color: #f0b400; font-size: 0.85rem; }
+.stop { background: #a33; border: none; color: #fff; border-radius: 4px; padding: 0.15rem 0.6rem; cursor: pointer; font-size: 0.8rem; margin-left: 0.4rem; }
 
 .composer { display: flex; gap: 0.5rem; padding: 0.8rem; border-top: 1px solid #333; }
 .composer textarea { flex: 1; resize: none; height: 3rem; background: #222; border: 1px solid #333; color: #e6e6e6; border-radius: 6px; padding: 0.5rem; font-family: inherit; }

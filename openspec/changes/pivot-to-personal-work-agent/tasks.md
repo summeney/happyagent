@@ -44,11 +44,11 @@
 
 ## 6. 并发多会话与 MCP
 
-- [ ] 6.1 验证多会话并发：会话 A 长任务运行中，会话 B 可同时发起并生成，事件不串会话
-- [ ] 6.2 分别取消：取消会话 A 不影响会话 B；切换视图不中断后台运行
-- [ ] 6.3 新增依赖 `@langchain/mcp-adapters`；按配置连接 MCP server 并把工具并入 `allTools`
-- [ ] 6.4 MCP 故障降级：连接失败跳过其工具、调用出错回灌可读错误，agent 不崩溃
-- [ ] 6.5 确定 MCP 配置存放位置（首版配置文件即可，见 design Open Questions）
+- [x] 6.1 多会话并发验证：两会话 Promise.all 并发跑（2.5s 并行非串行），各得正确隔离结果（A→4、B→北京）；composable 每会话独立消息/运行锁支持后台运行
+- [x] 6.2 分别取消：composable 每会话 AbortController + `cancel(id)`（App.vue 停止按钮）；验证取消 A（AbortError）不影响并发 B 正常完成
+- [x] 6.3 新增 `@langchain/mcp-adapters`；`core/mcp/index.ts` 用 MultiServerMCPClient 连接并入 `buildGraph` 工具集；验证 filesystem server 合并 14 个工具、agent 实际调用 `fs__get_file_info`
+- [x] 6.4 MCP 故障降级：`throwOnLoadError:false` + 外层 try/catch；验证坏配置下日志降级、agent 仍用内置工具正常运行
+- [x] 6.5 MCP 配置位置：`${userData}/mcp.json`（或 `HAPPYAGENT_MCP_CONFIG` 覆盖）；提供 `mcp.example.json` 示例
 
 ## 7. 测试
 
