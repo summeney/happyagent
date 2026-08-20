@@ -60,7 +60,7 @@
 
 ## 8. 可观测性与清理
 
-- [ ] 8.1 Langfuse 回调迁入 `src/core`，随 graph 运行于 server；验证会话分组按 `thread_id`、运行结束刷新、退出前刷新
-- [ ] 8.2 更新 README 与 `package.json` 描述/脚本，去掉"学习/研究用途"，反映纯桌面 + server 形态
-- [ ] 8.3 确认 `vendor/langgraphjs` 保留为参考，不进构建/分发
-- [ ] 8.4 全量 `typecheck` + 单元/集成/e2e 通过；手动跑一次真实任务冒烟
+- [x] 8.1 `core/tracing.ts` 重构为 embed 友好（`initTracing` 返回 handler）；runtime 用 `graph.withConfig({callbacks})` 烘焙进图（callbacks 沿图传播覆盖 LLM+工具），close 时 flush。验证 no-op 优雅降级（无 key → agent 正常、无报错）。〔完整 trace 投递与 session 分组需配 Langfuse key 验证，用户当前无 key〕
+- [x] 8.2 README 全面重写为新架构（Electron+embed server+Vue+并发+MCP+测试）；`package.json` 描述改为"个人全能工作 agent"；`.env.example` 补 HAPPYAGENT_* 可选项
+- [x] 8.3 确认 `src` 无 import `vendor`（仅 grep 描述字符串提及）；构建（esbuild+vite）只打 src，vendor 不进分发
+- [x] 8.4 全量通过：typecheck 绿、20 单元/集成、2 e2e、契约测试；手动真实任务冒烟（统计 .ts 文件数=16 正确）

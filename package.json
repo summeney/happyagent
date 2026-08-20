@@ -1,7 +1,7 @@
 {
   "name": "happyagent",
   "version": "0.1.0",
-  "description": "基于 LangGraph.js 构建、由 Kimi K2.6 驱动的 coding agent，带命令行与 Electron 桌面端（学习/研究用途）",
+  "description": "个人全能工作 agent：Electron 桌面端 + 本地 LangGraph Server 运行时，由 Kimi K2.6 驱动，支持并发多会话、长线任务与 MCP 接入",
   "type": "module",
   "private": true,
   "main": "dist-electron/main.cjs",
