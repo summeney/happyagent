@@ -119,7 +119,10 @@ test/  unit/  e2e/
 
 **回滚**：各阶段独立提交；若 R2 证伪，止步于阶段 2 并切换到 H1 方案（core 已解耦，改动集中在 app/ 与运行时封装层）。
 
-## Open Questions
+## Open Questions（实现后回填）
 
-- 落盘 checkpointer 的具体形态（复用现有 sqlite 文件路径约定 `session/paths.ts`，还是采用 server 自带存储）——不影响 specs 与 tasks 结构，接入时按 JS server 实际支持项确定。
-- MCP server 配置的存放位置（`src/shared` 的配置文件 vs 应用设置界面）——首版可先用配置文件，后续再做设置 UI，不改变 mcp-integration 的可观察行为。
+- ~~落盘 checkpointer 形态~~ → **已定**：复用 `node-sqlite-saver`，落 `${userData}/checkpoints.db`；线程目录另用 `thread-store.ts` 落 `threads.db`。
+- ~~MCP 配置存放位置~~ → **已定**：`${userData}/mcp.json`（`HAPPYAGENT_MCP_CONFIG` 可覆盖），首版配置文件；设置 UI 留待后续。
+- **agent 工作目录**（实现期新增）：当前经 `HAPPYAGENT_WORKDIR` 指定、桌面端默认 `app.getAppPath()`。后续应做成**按会话/项目可选**（工作 agent 常在不同项目间切换）——不改变现有工具的可观察行为，属增强。
+- **完整 Langfuse trace 投递与 session 分组**：接线已就位（handler 烘焙进图），但需配置 Langfuse 密钥才能端到端验证 trace 内容与按 `thread_id` 分组；用户当前无密钥。
+- **WebSocket 传输**（见 R6）：当前走 SSE；待 hono 生态版本对齐后可加 `@hono/node-ws` 增强。

@@ -14,7 +14,7 @@
 - [x] 2.2 编写 `langgraph.json`，`graphs.agent` 指向已编译 graph（当前 `src/server-graph.ts`，Group 1 后迁入 `src/core`）
 - [x] 2.3 本地 `langgraphjs dev` 能起来并注册 `agent` 图；用 SDK 直连跑通一轮 ReAct（list_dir 工具调用端到端，Moonshot 在 openai@1.x 下正常）
 - [x] 2.4 **验证 R2 打包**：embed spike 通过——`createEmbedServer` 进程内 `serve()`（Hono + `@hono/node-server`，无 CLI/Docker），注入我们的 graph + checkpointer + ThreadSaver，SDK 经 SSE 跑通一轮 ReAct（read_file），thread state 正确落盘（R4 一并验证）。新增依赖 `@langchain/langgraph-api`、`hono`、`@hono/node-server`
-- [ ] 2.5 保留 Kimi `temperature=1` 约束于 `src/core/model.ts`（迁入时补一条单测断言）
+- [x] 2.5 Kimi `temperature=1` 约束保留于 `src/core/model.ts`；`test/unit/model.test.ts` 已加断言（缺 key 抛错 + temperature=1）
 
 ## 3. 嵌入式运行时（createEmbedServer）与监工
 
