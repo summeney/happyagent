@@ -60,7 +60,7 @@
 
 ## 8. 可观测性与清理
 
-- [x] 8.1 `core/tracing.ts` 重构为 embed 友好（`initTracing` 返回 handler）；runtime 用 `graph.withConfig({callbacks})` 烘焙进图（callbacks 沿图传播覆盖 LLM+工具），close 时 flush。验证 no-op 优雅降级（无 key → agent 正常、无报错）。〔完整 trace 投递与 session 分组需配 Langfuse key 验证，用户当前无 key〕
+- [x] 8.1 `core/tracing.ts` 重构为 embed 友好；runtime 用 `graph.withConfig({callbacks})` 烘焙 handler 进图（沿图传播覆盖 LLM+工具），close 时 flush；渲染层传 `config.metadata.langfuseSessionId=thread_id` 做会话分组。**已配 key 端到端验证**：Langfuse 收到嵌套观测（LangGraph→llmCall→ChatOpenAI GENERATION）、processor 定时 flush 运行中即投递、no-op 降级正常。注：用户 Langfuse 为 v4 events_only 模式，读取走 `/api/public/v2/observations`（旧 `/traces`、`/sessions` 端点在该模式禁用）。
 - [x] 8.2 README 全面重写为新架构（Electron+embed server+Vue+并发+MCP+测试）；`package.json` 描述改为"个人全能工作 agent"；`.env.example` 补 HAPPYAGENT_* 可选项
 - [x] 8.3 确认 `src` 无 import `vendor`（仅 grep 描述字符串提及）；构建（esbuild+vite）只打 src，vendor 不进分发
 - [x] 8.4 全量通过：typecheck 绿、20 单元/集成、2 e2e、契约测试；手动真实任务冒烟（统计 .ts 文件数=16 正确）

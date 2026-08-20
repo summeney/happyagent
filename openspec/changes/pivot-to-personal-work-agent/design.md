@@ -124,5 +124,5 @@ test/  unit/  e2e/
 - ~~落盘 checkpointer 形态~~ → **已定**：复用 `node-sqlite-saver`，落 `${userData}/checkpoints.db`；线程目录另用 `thread-store.ts` 落 `threads.db`。
 - ~~MCP 配置存放位置~~ → **已定**：`${userData}/mcp.json`（`HAPPYAGENT_MCP_CONFIG` 可覆盖），首版配置文件；设置 UI 留待后续。
 - **agent 工作目录**（实现期新增）：当前经 `HAPPYAGENT_WORKDIR` 指定、桌面端默认 `app.getAppPath()`。后续应做成**按会话/项目可选**（工作 agent 常在不同项目间切换）——不改变现有工具的可观察行为，属增强。
-- **完整 Langfuse trace 投递与 session 分组**：接线已就位（handler 烘焙进图），但需配置 Langfuse 密钥才能端到端验证 trace 内容与按 `thread_id` 分组；用户当前无密钥。
+- ~~完整 Langfuse trace 投递与 session 分组~~ → **已验证**：配置密钥后 Langfuse 收到嵌套观测（LangGraph→llmCall→ChatOpenAI），会话分组经 `config.metadata.langfuseSessionId=thread_id` 接线。注意：v4 events_only 部署下读取走 `/api/public/v2/observations`（旧 `/traces`、`/sessions` 端点禁用）。
 - **WebSocket 传输**（见 R6）：当前走 SSE；待 hono 生态版本对齐后可加 `@hono/node-ws` 增强。

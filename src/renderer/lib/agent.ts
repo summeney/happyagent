@@ -133,6 +133,8 @@ export async function send(text: string): Promise<void> {
       input: { messages: [{ role: "human", content: text }] },
       streamMode: "updates",
       signal: controller.signal,
+      // Langfuse 按会话分组：thread_id 作为 session 标识（llm-tracing 要求）
+      config: { metadata: { langfuseSessionId: id } },
     })) {
       const ev = chunk as { event: string; data: Record<string, { messages?: Record<string, unknown>[] }> };
       if (ev.event === "updates") {
