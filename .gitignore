@@ -11,3 +11,7 @@ data/
 
 # LangGraph API
 .langgraph_api
+
+# 测试产物
+test-results/
+playwright-report/

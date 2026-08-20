@@ -55,8 +55,8 @@
 - [x] 7.1 引入 Vitest（`npm test`）；`buildGraph` 增 `chatModel` 注入口 + `GraphChatModel` 接口，可注入替身模型绕过真实网络
 - [x] 7.2 单元测试：`tools/*`（临时工作区读写/编辑/grep/run_bash 退出码）、`workspace`、`model`（缺 key 抛错 + temperature=1）——共 17 例
 - [x] 7.3 集成测试：注入替身模型 `invoke` graph，覆盖多步工具调用、无工具直接答复、步数上限（recursionLimit 抛错）——3 例；全部 20 例通过，test 纳入 typecheck
-- [ ] 7.4 引入 Playwright `_electron`；e2e 覆盖 新建会话→发消息→流式渲染、跨重启读回历史
-- [ ] 7.5 `smoke.ts` 转为打标签的 Kimi function-calling 契约测试（不进 CI 默认路径）
+- [x] 7.4 Playwright `_electron` e2e（`npm run test:e2e`）：真 Electron 启动，①新建会话→发消息→流式 AI 答复渲染 ②relaunch 同 userData 验证会话持久化读回——2 例通过
+- [x] 7.5 `smoke.ts` 转为 `test/contract/kimi.contract.test.ts`（独立 config、`npm run test:contract`，缺 key 自动跳过，不进默认路径）；真实 Kimi function-calling 契约通过
 
 ## 8. 可观测性与清理
 

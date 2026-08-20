@@ -10,7 +10,7 @@
     "typecheck:renderer": "tsc -p tsconfig.renderer.json --noEmit",
     "test": "NODE_OPTIONS=--experimental-sqlite vitest run",
     "test:contract": "vitest run --config vitest.contract.config.ts",
-    "test:e2e": "NODE_OPTIONS=--experimental-sqlite playwright test",
+    "test:e2e": "npm run build:electron && playwright test",
     "dev:server": "langgraphjs dev --no-browser",
     "build:electron": "node scripts/build-electron.mjs",
     "desktop": "npm run build:electron && NODE_OPTIONS=--experimental-sqlite electron ."
