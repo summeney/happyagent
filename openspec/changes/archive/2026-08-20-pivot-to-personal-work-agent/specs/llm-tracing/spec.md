@@ -9,13 +9,13 @@
 - **WHEN** 用户在同一会话（相同 `thread_id`）中连续运行多个任务
 - **THEN** 这些运行在 Langfuse 中归属于同一个 session，可一起查看
 
-### Requirement: 运行结束刷新 trace
+### Requirement: 进程退出前刷新 trace
 
 系统 SHALL 在每次 agent 运行结束时刷新待上报的 trace 数据，以保证该次运行产生的 trace 不因缓冲未发送而丢失；在应用关闭运行时 server 之前，MUST 完成待上报数据的刷新。
 
-#### Scenario: 运行结束后 trace 完整
+#### Scenario: 短命 CLI 运行不丢 trace
 
-- **WHEN** 用户运行一个任务并等其完成
+- **WHEN** 用户运行一个任务，任务完成后进程随即退出
 - **THEN** 该次运行产生的 trace 完整出现在 Langfuse 中，不出现缺失或截断
 
 #### Scenario: 应用退出不丢 trace

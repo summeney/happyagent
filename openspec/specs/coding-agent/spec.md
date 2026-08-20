@@ -7,19 +7,28 @@
 ## Requirements
 
 ### Requirement: Kimi 模型接入
-系统 SHALL 通过 OpenAI 兼容协议接入 Kimi K2.6 模型，端点为 `https://api.moonshot.cn/v1`，密钥从环境变量 `MOONSHOT_API_KEY` 读取，且 MUST 支持工具调用（function calling）。
+
+系统 SHALL 通过 OpenAI 兼容协议接入 Kimi K2.6 模型，端点为 `https://api.moonshot.cn/v1`，密钥从环境变量 `MOONSHOT_API_KEY` 读取，且 MUST 支持工具调用（function calling）；调用参数 MUST 满足 Kimi 的约束（如 `temperature=1`）。模型的构造 SHALL 可被替换——既支持按模型名构造真实模型，也支持注入一个预设应答的替身模型，以便在不依赖真实网络的情况下测试 agent 逻辑。
 
 #### Scenario: 正常调用模型
+
 - **WHEN** 提供有效的 `MOONSHOT_API_KEY` 并向 agent 发送一条用户消息
 - **THEN** 系统调用 Moonshot 端点并返回模型的文本或工具调用响应
 
 #### Scenario: 缺少密钥
+
 - **WHEN** 环境变量 `MOONSHOT_API_KEY` 未设置
 - **THEN** 系统在启动或首次调用时给出明确的错误提示，说明需要配置该密钥，而不是抛出无意义的底层异常
 
 #### Scenario: 模型返回工具调用
+
 - **WHEN** 模型决定使用某个已绑定的工具
 - **THEN** 系统能解析出规范的工具调用（工具名 + 结构化参数）并据此执行对应工具
+
+#### Scenario: 注入替身模型测试
+
+- **WHEN** 测试中注入一个预设应答的替身模型并驱动一轮 ReAct 循环
+- **THEN** agent 使用该替身模型完成循环，不发起真实的 Moonshot 网络调用
 
 ### Requirement: 文件系统工具
 系统 SHALL 向 agent 暴露读取文件、列出目录、写入文件的工具，使其能够查看与修改工作区内的代码。
@@ -65,21 +74,3 @@
 #### Scenario: 循环具备步数上限
 - **WHEN** 任务导致工具调用反复进行
 - **THEN** 系统在达到预设的最大步数时安全终止，避免无限循环
-
-### Requirement: 命令行交互入口
-系统 SHALL 提供一个命令行入口，接收用户的任务描述，运行 agent，并以可读方式（含中间工具调用过程）展示执行进度与最终结果。
-
-#### Scenario: 从命令行运行一次任务
-- **WHEN** 用户通过命令行提供一段任务描述并启动程序
-- **THEN** 系统运行 agent 并在终端流式展示其思考、工具调用与最终答复
-
-### Requirement: 危险操作人工审批
-系统 SHALL 在执行命令执行工具（`run_bash`）之前暂停并向用户请求确认；仅在用户批准后才实际执行，用户拒绝时则跳过该命令并把结果告知模型。
-
-#### Scenario: 批准执行
-- **WHEN** agent 请求执行一条 shell 命令且人工审批已启用
-- **THEN** 系统暂停并展示待执行命令，用户批准后系统执行该命令并继续循环
-
-#### Scenario: 拒绝执行
-- **WHEN** 用户对待执行的命令给出拒绝
-- **THEN** 系统不执行该命令，并把"已被用户拒绝"作为工具结果回灌给模型，使其调整策略
