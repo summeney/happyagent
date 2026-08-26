@@ -6,7 +6,7 @@
 	url = git@github.com:electron/electron.git
 [submodule "vendor/multica"]
 	path = vendor/multica
-	url = git@github.com:multica-ai/multica.git
+	url = https://github.com/multica-ai/multica.git
 [submodule "vendor/deer-flow"]
 	path = vendor/deer-flow
 	url = git@github.com:bytedance/deer-flow.git
