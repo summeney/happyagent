@@ -14,6 +14,16 @@ import { join } from "node:path";
 import { app, BrowserWindow, ipcMain, utilityProcess, type UtilityProcess } from "electron";
 import type { RuntimeStatus } from "../../shared/ipc.js";
 
+// 开发模式判据（见 design.md 决策 1）：以「渲染层 dev-server URL 是否由环境提供」为唯一开关，
+// 并以 app.isPackaged 作硬保险——打包态即便存在该变量也绝不进入开发模式。
+// isDev 同时门控：loadURL vs loadFile、runtime 是否加 --inspect、runtime 端口是否钉死。
+const devServerUrl = process.env.HAPPYAGENT_RENDERER_URL;
+const isDev = !app.isPackaged && !!devServerUrl;
+
+// 开发态固定端口约定（见 design.md 决策 4/5）。
+const DEV_RUNTIME_PORT = "2024"; // runtime HTTP/SSE 监听端口，便于 curl 手测
+const DEV_RUNTIME_INSPECT_PORT = "9230"; // runtime 子进程调试端口，与主进程 9229 相异
+
 let child: UtilityProcess | null = null;
 let status: RuntimeStatus = { state: "starting" };
 let win: BrowserWindow | null = null;
@@ -37,9 +47,14 @@ function forkRuntime(): Promise<string> {
         // agent 工作目录（工具相对路径的根）。当前默认启动 cwd；
         // 未来应按会话/项目可选（design.md Open Questions）。
         HAPPYAGENT_WORKDIR: process.env.HAPPYAGENT_WORKDIR ?? app.getAppPath(),
+        // 开发态钉死 runtime 端口，便于 curl 手测 HTTP/SSE；生产不注入 → entry.ts 用 port:0 随机。
+        ...(isDev ? { HAPPYAGENT_PORT: process.env.HAPPYAGENT_PORT ?? DEV_RUNTIME_PORT } : {}),
       },
-      // node:sqlite 在内置 Node 下仍是实验特性，需显式开启
-      execArgv: ["--experimental-sqlite"],
+      // node:sqlite 在内置 Node 下仍是实验特性，需显式开启。
+      // 开发态追加 --inspect 使 runtime 子进程可被调试器 attach 下断点。
+      execArgv: isDev
+        ? ["--experimental-sqlite", `--inspect=${DEV_RUNTIME_INSPECT_PORT}`]
+        : ["--experimental-sqlite"],
       stdio: "inherit",
     });
     child = proc;
@@ -84,7 +99,14 @@ function createWindow(): void {
       nodeIntegration: false,
     },
   });
-  win.loadFile(join(__dirname, "renderer", "index.html"));
+  // 开发态从 Vite dev server 加载（HMR + 真 .vue/.ts sourcemap），并自动打开 DevTools；
+  // 生产态仍加载打包后的渲染产物。
+  if (isDev && devServerUrl) {
+    win.loadURL(devServerUrl);
+    win.webContents.openDevTools();
+  } else {
+    win.loadFile(join(__dirname, "renderer", "index.html"));
+  }
   win.webContents.on("did-finish-load", broadcastStatus);
 }
 

@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // 一键启动开发态 Electron 并调试。VSCode 自行为主进程注入 inspector；
+      // autoAttachChildProcesses 会自动附加到带 --inspect 的 runtime 子进程（见 main.ts）。
+      // 注入 HAPPYAGENT_RENDERER_URL → 主进程进入 isDev 分支（loadURL + runtime --inspect + 固定端口）。
+      // --remote-debugging-port=9222 供“渲染层 Vue”配置 attach（渲染层默认用 F12，此为可选）。
+      "type": "node",
+      "request": "launch",
+      "name": "Debug 主进程 + runtime (Electron)",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "runtimeArgs": ["--remote-debugging-port=9222", "."],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "HAPPYAGENT_RENDERER_URL": "http://localhost:5173",
+        "NODE_OPTIONS": "--experimental-sqlite"
+      },
+      "autoAttachChildProcesses": true,
+      "console": "integratedTerminal",
+      "preLaunchTask": "dev:prep"
+    },
+    {
+      // 备选：若 autoAttachChildProcesses 未捕获 utilityProcess，手动 attach 到 runtime 的固定调试端口。
+      "type": "node",
+      "request": "attach",
+      "name": "Attach runtime (9230)",
+      "port": 9230,
+      "restart": true,
+      "continueOnAttach": true
+    },
+    {
+      // 可选：在 VSCode 内断点 Vue（需主配置已带 --remote-debugging-port=9222）。多数场景用 F12 即可。
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach 渲染层 Vue (9222)",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/src/renderer"
+    }
+  ],
+  "compounds": [
+    {
+      // 一键：启动主进程+runtime 调试，并附加渲染层 Vue 调试。
+      "name": "Dev: 主进程 + runtime + 渲染层",
+      "configurations": ["Debug 主进程 + runtime (Electron)", "Attach 渲染层 Vue (9222)"],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // 一次性构建 main/preload/runtime + 渲染层，确保 dist-electron/main.cjs 存在，供调试启动。
+      "label": "build:electron",
+      "type": "shell",
+      "command": "npm run build:electron",
+      "problemMatcher": []
+    },
+    {
+      // 后台 Vite dev server（渲染层 HMR）。VSCode 识别到同名后台任务仍在运行时会复用，
+      // 不会因 strictPort(5173) 冲突而重复拉起。
+      "label": "vite",
+      "type": "shell",
+      "command": "${workspaceFolder}/node_modules/.bin/vite",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Local:"
+        }
+      }
+    },
+    {
+      // 调试前置：并行完成一次性构建 + 起 Vite dev server，二者就绪后再启动 Electron。
+      "label": "dev:prep",
+      "dependsOn": ["build:electron", "vite"]
+    }
+  ]
+}

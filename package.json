@@ -11,6 +11,7 @@
     "test": "NODE_OPTIONS=--experimental-sqlite vitest run",
     "test:contract": "vitest run --config vitest.contract.config.ts",
     "test:e2e": "npm run build:electron && playwright test",
+    "dev": "concurrently -k -n vite,esbuild,app -c blue,yellow,green \"vite\" \"node scripts/build-electron.mjs --watch\" \"node scripts/dev-electron.mjs\"",
     "dev:server": "langgraphjs dev --no-browser",
     "build:electron": "node scripts/build-electron.mjs",
     "desktop": "npm run build:electron && NODE_OPTIONS=--experimental-sqlite electron ."
@@ -36,6 +37,7 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "^22.0.0",
     "@vitejs/plugin-vue": "^6.0.8",
+    "concurrently": "^10.0.5",
     "electron": "^43.4.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",

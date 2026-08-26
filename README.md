@@ -113,6 +113,31 @@ npm run typecheck   # TypeScript 类型检查（含 test）
 
 ## 开发调试
 
+### 开发模式（热更 + 断点）
+
+```bash
+npm run dev   # 并行：Vite dev server（渲染层 HMR）+ esbuild watch（main/runtime 增量）+ 自动重启 Electron
+```
+
+- **渲染层（Vue）实时热更**：改 `src/renderer/**` 保存即生效、保留界面状态；F12 打开 DevTools 看到的是原始 `.vue`/`.ts` 源码，可直接断点。
+- **主进程 / runtime 改动自动重建重启**：改 `src/app/**`、`src/core/**` 保存后，esbuild 增量重建、Electron 自动重启（Node 进程无法热替换，重启是唯一手段）。
+- **服务端手测**：runtime 在开发态钉死端口 `2024`，可直接 `curl http://127.0.0.1:2024/...` 测 HTTP/SSE，脱离界面调服务端。
+- 开发模式由 `HAPPYAGENT_RENDERER_URL` 是否存在触发，并以打包态（`app.isPackaged`）作硬保险——正式应用永不进入开发模式。
+
+**端口约定**：`9229` 主进程调试 · `9230` runtime 调试 · `5173` Vite dev server · `2024` runtime HTTP/SSE。
+
+### VSCode 一键调试
+
+在「运行和调试」面板选择 **Dev: 主进程 + runtime + 渲染层** 并启动（F5）：
+
+- 自动 `build:electron` + 起 Vite dev server，然后以开发态启动 Electron 并附加调试器。
+- 主进程与 runtime（经 `autoAttachChildProcesses` 自动附加）均可下断点；若未自动附加 runtime，用备选配置 **Attach runtime (9230)**。
+- 渲染层 Vue：用 F12，或用可选配置 **Attach 渲染层 Vue (9222)** 在编辑器内断点。
+
+> 注意：VSCode 调试流用一次性 `build:electron`（不带 watch），改主进程/runtime 后需重启调试会话；渲染层仍由 Vite HMR 实时热更。若要 watch + 自动重启，用 `npm run dev`。
+
+### 其它
+
 ```bash
 npm run dev:server  # 单独起 langgraphjs dev（LangGraph Studio UI，调试 graph）
 npm run build:electron  # 打包 main/preload/runtime + Vite 构建 renderer
